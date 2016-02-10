@@ -1,0 +1,113 @@
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+/***-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+Including the ros.h header file for the ROS - Arduino program and a header file for 
+using messages of relevant data type which is Float32 in this case.
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-***/
+
+#include <ros.h>
+#include <std_msgs/Float32.h>
+
+
+// Defining the analog input pins to measure stretch sensor values:
+// --------------------------
+const int stretchpin_1 = 0; 
+const int stretchpin_2 = 2; 
+
+
+/***-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* 
+Setting up the publisher with the topic name of "stretch_sensor_1" and 
+"stretch_sensor_2" for sensors 1 and 2, respectively.
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-***/
+
+std_msgs::Float32 stretch_msg_1, stretch_msg_2;
+ros::Publisher pub_stretch_1("stretch_sensor_1", &stretch_msg_1);
+ros::Publisher pub_stretch_2("stretch_sensor_2", &stretch_msg_2);
+
+
+
+/***-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* 
+Initializing the node handle which is the main access point to communications with 
+the ROS system. It allows the program to create a publisher and/or subscriber. 
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-***/
+
+ros::NodeHandle nh;
+
+
+void setup() 
+{ 
+    
+// Using the serial monitor window to help debug the sketch:
+//-----------------------
+  Serial.begin(57600);
+    
+    
+// Initializing the publisher
+//----------------
+  nh.initNode();
+
+
+/***-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* 
+The advertise() function here lets ROS know that we want to publish on the given topic 
+names. This notifies the ROS master which keeps a registry of all the publishers and the 
+subscribers. After this call is made, the master node will notify any node which is trying 
+to subscribe to these topics and that node will in turn connect with this node. advertise() 
+returns a Publisher object which allows us to publish messages on that topic through a call 
+to publish(). Once this object is destroyed, the topic will be automatically unadvertised.
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-***/
+
+  nh.advertise(pub_stretch_1);
+  nh.advertise(pub_stretch_2);
+  
+} 
+
+
+void loop() 
+{ 
+  int stretchposition_1;  // To get input value from the analog pin 0 on the Arduino for sensor 1.
+  int stretchposition_2;  // To get input value from the analog pin 2 on the Arduino for sensor 2.
+  
+
+// Reading the values of the stretch sensors :
+//----------------------------------------------
+  stretchposition_1 = analogRead(stretchpin_1);
+  stretchposition_2 = analogRead(stretchpin_2);
+  
+
+  delay(50);  // wait 50ms 
+  
+  
+// Assigning the value to the message objects
+//----------------------------------------------
+  stretch_msg_1.data  = stretchposition_1;
+  stretch_msg_2.data  = stretchposition_2;
+
+
+/***-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*    
+The publish() function is used to send messages. Its argument is an instance of the 
+message. The type of this object must agree with the type of the parameter given to 
+the advertise() call, as was done in the constructor above.
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-***/
+    
+  pub_stretch_1.publish(&stretch_msg_1);
+  pub_stretch_2.publish(&stretch_msg_2);
+  
+  
+/***-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*   
+spin() handles all ROS communication callbacks. It will exit when Ctrl-C is pressed 
+or the node is shutdown by the master.
+-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-***/
+
+  nh.spinOnce(); 
+  
+  delay(20);  // wait 20ms 
+  
+} 
+
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+
+
+
